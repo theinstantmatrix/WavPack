@@ -1,0 +1,63 @@
+name: Build WavPack (Windows ARM64/AArch64)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-winarm64-msvc:
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build
+        run: |
+          cmake -B build -S . -G "Visual Studio 17 2022" -A ARM64 -DCMAKE_INSTALL_PREFIX="$PWD/install" -DBUILD_SHARED_LIBS=OFF -DWAVPACK_BUILD_PROGRAMS=ON
+          cmake --build build --config Release
+          cmake --install build
+      - name: Copy files
+        run: |
+          cp license.txt install/bin
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: wavpack-git-winarm64-msvc-${{github.sha}}
+          path: install/bin
+          if-no-files-found: error
+  build-winarm64-msys2:
+    runs-on: windows-11-arm
+    steps:
+      - name: 'Configure git: core.autocrlf, core.eol'
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v6
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANGARM64
+          update: true
+          pacboy: >-
+            cmake:p
+            ninja:p
+            toolchain:p
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          cmake -B build -S . -DBUILD_SHARED_LIBS=OFF -DWAVPACK_BUILD_PROGRAMS=ON
+          cmake --build build
+      - name: Copy files
+        shell: msys2 {0}
+        run: |
+          mkdir upload
+          cp build/{wavpack,wvgain,wvtag,wvunpack}.exe upload
+          cp license.txt upload
+          strip upload/*.exe
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: wavpack-git-winarm64-msys2-${{github.sha}}
+          path: upload
+          if-no-files-found: error

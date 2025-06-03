@@ -1,3 +1,8 @@
+WavPack (with unofficial binaries for Windows ARM64/AArch64, fork of [dbry/WavPack](https://github.com/dbry/WavPack)).  
+Downloads are hosted at the [releases](https://github.com/theinstantmatrix/WavPack/releases) section.
+
+---
+
 <img src="https://www.wavpack.com/logos/wavpacklogo-with-theme.svg" width="250"></img>
 
 Hybrid Lossless Wavefile Compressor
