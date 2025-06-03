@@ -1,0 +1,42 @@
+name: Build WavPack (Release, Windows ARM64/AArch64)
+
+on: workflow_dispatch
+
+jobs:
+  build-winarm64:
+    defaults:
+      run:
+        shell: bash
+    runs-on: windows-11-arm
+    steps:
+      - uses: robinraju/release-downloader@v1
+        with:
+          repository: dbry/WavPack
+          latest: true
+          fileName: 'wavpack-*.tar.xz'
+          tarBall: false
+          zipBall: false
+          out-file-path: release
+      - name: Extract release and rename
+        run: |
+          cd release
+          tar -xvJf wavpack-*.tar.xz || true
+          rm wavpack-*.tar.xz
+          for a in wavpack-*; do mv "$a" wavpack; done
+      - name: Build
+        run: |
+          cd release/wavpack
+          cmake -B build -S . -G "Visual Studio 17 2022" -A ARM64 -DCMAKE_INSTALL_PREFIX="$PWD/install" -DBUILD_SHARED_LIBS=OFF -DWAVPACK_BUILD_PROGRAMS=ON
+          cmake --build build --config Release
+          cmake --install build
+      - name: Copy files
+        run: |
+          cd release/wavpack
+          cp COPYING install/bin/license.txt
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: wavpack-git-windows-arm64-msys2-${{github.sha}}
+          path: release/wavpack/install/bin
+          if-no-files-found: error
+          retention-days: 1
